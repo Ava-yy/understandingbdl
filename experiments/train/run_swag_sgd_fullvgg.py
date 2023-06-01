@@ -59,6 +59,9 @@ parser.add_argument('--inference', choices=['low_rank_gaussian', 'projected_sgd'
 parser.add_argument('--subspace', choices=['covariance', 'pca', 'freq_dir'], default='covariance')
 args = parser.parse_args()
 
+
+# this code is based on the training code for multiswag, which is different from the training process for single swag. We import the vgg from torchvision.
+
 args.device = None
 if torch.cuda.is_available():
     args.device = torch.device('cuda')
@@ -75,8 +78,8 @@ torch.backends.cudnn.benchmark = True
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed(args.seed)
 
-print('Using model %s' % args.model)
-model_cfg = getattr(models, args.model)
+# print('Using model %s' % args.model)
+# model_cfg = getattr(models, args.model)
 
 print('Loading dataset %s from %s' % (args.dataset, args.data_path))
 # loaders, num_classes = data.loaders(
@@ -96,9 +99,12 @@ loaders, num_classes, _ = data_places365_10c.loaders(
     os.path.join(args.data_path, args.dataset.lower()), #args.data_path, 
     args.batch_size,
     args.num_workers, 
+    # model_cfg.transform_train,
+    # model_cfg.transform_test,
     shuffle_train=True)
 
 print('num_classes')
+
 
 if args.label_arr:
     print("Using labels from {}".format(args.label_arr))
@@ -106,10 +112,20 @@ if args.label_arr:
     print("Corruption:", (loaders['train'].dataset.targets != label_arr).mean())
     loaders['train'].dataset.targets = label_arr
 
-print('Preparing model')
-print(*model_cfg.args)
-model = model_cfg.base(*model_cfg.args, num_classes=num_classes, **model_cfg.kwargs)
-# model_cfg.base = class 'swag.models.vgg.VGG'
+# print('Preparing model')
+# print(*model_cfg.args)
+# model = model_cfg.base(*model_cfg.args, num_classes=num_classes, **model_cfg.kwargs)
+# # model_cfg.base = class 'swag.models.vgg.VGG'
+
+# model.to(args.device)
+model_cfg = getattr(models,args.model)
+print('model_cfg',model_cfg)
+print('model_cfg_args',model_cfg.args)
+print("Using model %s" % args.model)
+model_class = getattr(torchvision.models, args.model)
+print('model_class',model_class)
+
+model = torch.load(os.path.join('./',"places365_vgg16_finetune.pt"))
 
 model.to(args.device)
 
@@ -120,11 +136,18 @@ else:
     args.no_cov_mat = True
 if args.swag:
     print('SWAG training')
-    swag_model = SWAG(model_cfg.base, 
+    # swag_model = SWAG(model_cfg.base, 
+    #                 subspace_type=args.subspace, subspace_kwargs={'max_rank': args.max_num_models},
+    #                 *model_cfg.args, num_classes=num_classes, **model_cfg.kwargs)
+    # swag_model.to(args.device)
+
+    swag_model = SWAG(model, 
                     subspace_type=args.subspace, subspace_kwargs={'max_rank': args.max_num_models},
-                    *model_cfg.args, num_classes=num_classes, **model_cfg.kwargs)
+                    *model.args, num_classes=num_classes, **model.kwargs)
     swag_model.to(args.device)
+
 else:
+
     print('SGD training')
 
 

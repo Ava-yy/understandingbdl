@@ -11,7 +11,8 @@ import numpy as np
 import json
 
 from swag import data, models, utils, losses
-from swag.posteriors import SWAG
+from swag.posteriors import SWAG_single
+#from swag.posteriors import SWAG
 from swag import data_places365_10c
 
 parser = argparse.ArgumentParser(description='SGD/SWA training')
@@ -47,7 +48,8 @@ else:
 
 
 torch.backends.cudnn.benchmark = True
-model_cfg = getattr(models, args.model)
+
+# model_cfg = getattr(models, args.model)
 
 # print('Loading dataset %s from %s' % (args.dataset, args.data_path))
 # loaders, num_classes = data.loaders(
@@ -66,8 +68,8 @@ loaders, num_classes,val_images_names_labels = data_places365_10c.loaders(
     os.path.join(args.data_path, args.dataset.lower()), #args.data_path, 
     args.batch_size,
     args.num_workers, 
-    model_cfg.transform_train,
-    model_cfg.transform_test,
+    # model_cfg.transform_train,
+    # model_cfg.transform_test,
     shuffle_train=True)
 
 
@@ -77,17 +79,31 @@ if args.label_arr:
     print("Corruption:", (loaders['train'].dataset.targets != label_arr).mean())
     loaders['train'].dataset.targets = label_arr
 
-print('Preparing model')
-model = model_cfg.base(*model_cfg.args, num_classes=num_classes,
-                       **model_cfg.kwargs)
+# print('Preparing model')
+# model = model_cfg.base(*model_cfg.args, num_classes=num_classes,
+#                        **model_cfg.kwargs)
+# model.to(args.device)
+# print("Model has {} parameters".format(sum([p.numel() for p in model.parameters()])))
+
+
+model_class = getattr(torchvision.models, args.model)
+print('model_class',model_class)
+model = torch.load(os.path.join("./","places365_3c_vgg16_finetune.pt"))
 model.to(args.device)
-print("Model has {} parameters".format(sum([p.numel() for p in model.parameters()])))
 
 
-swag_model = SWAG(model_cfg.base,
-                args.subspace, {'max_rank': args.max_num_models},
-                *model_cfg.args, num_classes=num_classes,
-                **model_cfg.kwargs)
+# swag_model = SWAG(model_cfg.base,
+#                 args.subspace, {'max_rank': args.max_num_models},
+#                 *model_cfg.args, num_classes=num_classes,
+#                 **model_cfg.kwargs)
+
+swag_model = SWAG(
+    model_class,
+    no_cov_mat=not args.cov_mat,
+    # loading=True,
+    max_num_models=20,
+    num_classes=num_classes,
+)
 swag_model.to(args.device)
 
 
@@ -108,7 +124,7 @@ total_predictions = []
 for ckpt_i, ckpt in enumerate(args.swag_ckpts):
     print("Checkpoint {}".format(ckpt))
     checkpoint = torch.load(ckpt)
-    swag_model.subspace.rank = torch.tensor(0)
+    #swag_model.subspace.rank = torch.tensor(0)
     swag_model.load_state_dict(checkpoint['state_dict'])
 
     swag_predictions = []

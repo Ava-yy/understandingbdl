@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
+from .swag_single import SWAG_single
 #from .swag import SWAG
-from .swag_single import SWAG
 from .laplace import KFACLaplace
 
 from .inferences import *

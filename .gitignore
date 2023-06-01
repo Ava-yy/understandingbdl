@@ -1,0 +1,6 @@
+datasets/
+experiments/train/ckpts/
+experiments/train/*.pt
+experiments/train/__pycache__/
+experiments/train/eval_images/
+*__pycache__

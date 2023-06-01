@@ -47,7 +47,8 @@ else:
 
 
 torch.backends.cudnn.benchmark = True
-model_cfg = getattr(models, args.model)
+
+# model_cfg = getattr(models, args.model)
 
 # print('Loading dataset %s from %s' % (args.dataset, args.data_path))
 # loaders, num_classes = data.loaders(
@@ -66,8 +67,8 @@ loaders, num_classes,val_images_names_labels = data_places365_10c.loaders(
     os.path.join(args.data_path, args.dataset.lower()), #args.data_path, 
     args.batch_size,
     args.num_workers, 
-    model_cfg.transform_train,
-    model_cfg.transform_test,
+    # model_cfg.transform_train,
+    # model_cfg.transform_test,
     shuffle_train=True)
 
 
@@ -77,17 +78,28 @@ if args.label_arr:
     print("Corruption:", (loaders['train'].dataset.targets != label_arr).mean())
     loaders['train'].dataset.targets = label_arr
 
-print('Preparing model')
-model = model_cfg.base(*model_cfg.args, num_classes=num_classes,
-                       **model_cfg.kwargs)
+# print('Preparing model')
+# model = model_cfg.base(*model_cfg.args, num_classes=num_classes,
+#                        **model_cfg.kwargs)
+# model.to(args.device)
+# print("Model has {} parameters".format(sum([p.numel() for p in model.parameters()])))
+
+
+model_class = getattr(torchvision.models, args.model)
+print('model_class',model_class)
+model = torch.load(os.path.join(args.dir,"places365_vgg16_finetune.pt"))
 model.to(args.device)
-print("Model has {} parameters".format(sum([p.numel() for p in model.parameters()])))
 
 
-swag_model = SWAG(model_cfg.base,
-                args.subspace, {'max_rank': args.max_num_models},
-                *model_cfg.args, num_classes=num_classes,
-                **model_cfg.kwargs)
+# swag_model = SWAG(model_cfg.base,
+#                 args.subspace, {'max_rank': args.max_num_models},
+#                 *model_cfg.args, num_classes=num_classes,
+#                 **model_cfg.kwargs)
+
+swag_model = SWAG(model.base, 
+            subspace_type=args.subspace, subspace_kwargs={'max_rank': args.max_num_models},
+            *model.args, num_classes=num_classes, **model.kwargs)
+
 swag_model.to(args.device)
 
 
@@ -101,7 +113,7 @@ print('Preparing directory %s' % args.savedir)
 os.makedirs(args.savedir, exist_ok=True)
 os.makedirs(args.savedir+'eval_images',exist_ok=True)
 
-json.dump(val_images_names_labels,open(os.path.join(args.savedir,'places365_3c_val_fn_list.json'),'w'))
+json.dump(val_images_names_labels,open(os.path.join(args.savedir,'places365_10c_val_fn_list.json'),'w'))
 
 total_predictions = []
 
