@@ -97,7 +97,7 @@ model.to(args.device)
 #                 *model_cfg.args, num_classes=num_classes,
 #                 **model_cfg.kwargs)
 
-swag_model = SWAG(
+swag_model = SWAG_single(
     model_class,
     no_cov_mat=not args.cov_mat,
     # loading=True,

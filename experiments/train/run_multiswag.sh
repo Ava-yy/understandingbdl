@@ -9,15 +9,13 @@ BASEDIR=ckpts/places365_multiswag_3c
 # places365_multiswag_fullvgg 
 # places365_singleswag_fullvgg
 
-
 SWAG_RUNS=3
 
 LR=0.01
 WD=1e-4
-SWAG_START=161
-SWAG_LR=0.01
+SWAG_START=1
+SWAG_LR=0.02
 SWAG_SAMPLES=20
-
 echo ${WD}
 
 CKPT_FILES=""
