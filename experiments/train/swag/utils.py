@@ -32,7 +32,7 @@ def get_logging_print(fname):
 
 
 def flatten(lst):
-    tmp = [i.contiguous().view(-1,1) for i in lst]
+    tmp = [i.contiguous().view(-1, 1) for i in lst]
     return torch.cat(tmp).view(-1)
 
 
@@ -40,18 +40,18 @@ def unflatten_like(vector, likeTensorList):
     # Takes a flat torch.tensor and unflattens it to a list of torch.tensors
     #    shaped like likeTensorList
     outList = []
-    i=0
+    i = 0
     for tensor in likeTensorList:
-        #n = module._parameters[name].numel()
+        # n = module._parameters[name].numel()
         n = tensor.numel()
-        outList.append(vector[:,i:i+n].view(tensor.shape))
-        i+=n
+        outList.append(vector[:, i:i+n].view(tensor.shape))
+        i += n
     return outList
 
 
-def LogSumExp(x,dim=0):
-    m,_ = torch.max(x,dim=dim,keepdim=True)
-    return m + torch.log((x - m).exp().sum(dim=dim,keepdim=True))
+def LogSumExp(x, dim=0):
+    m, _ = torch.max(x, dim=dim, keepdim=True)
+    return m + torch.log((x - m).exp().sum(dim=dim, keepdim=True))
 
 
 def adjust_learning_rate(optimizer, lr):
@@ -96,11 +96,11 @@ def train_epoch(loader, model, criterion, optimizer, cuda=True, regression=False
         loss, output, stats = criterion(model, input, target)
         if regularizer:
             loss += regularizer(model)
-        
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-            
+
         loss_sum += loss.data.item() * input.size(0)
         for key, value in stats.items():
             stats_sum[key] += value * input.size(0)
@@ -117,7 +117,7 @@ def train_epoch(loader, model, criterion, optimizer, cuda=True, regression=False
                 correct / num_objects_current * 100.0
             ))
             verb_stage += 1
-    
+
     return {
         'loss': loss_sum / num_objects_current,
         'accuracy': None if regression else correct / num_objects_current * 100.0,
@@ -157,11 +157,10 @@ def eval(loader, model, criterion, cuda=True, regression=False, verbose=False, e
     }
 
 
-
 # denormalize an image tensor after normalization
-
 IMG_MEAN = [0.485, 0.456, 0.406]
 IMG_STD = [0.229, 0.224, 0.225]
+
 
 def denormalize(x, mean=IMG_MEAN, std=IMG_STD):
     # 3, H, W, B
@@ -173,6 +172,7 @@ def denormalize(x, mean=IMG_MEAN, std=IMG_STD):
 
 # # tensor_x: size [B, 3, H, W]
 # torchvison.utils.save_image(denormalize(tensor_x))
+
 
 def denormalize_single(x, mean=IMG_MEAN, std=IMG_STD):
     # 3, H, W, B
@@ -199,9 +199,9 @@ def predict(loader, model, verbose=False):
 
     with torch.no_grad():
 
-        for input, target in loader: # loader len = 79
+        for input, target in loader:  # loader len = 79
 
-            input = input.cuda(non_blocking=True) # (128,3,32,32)
+            input = input.cuda(non_blocking=True)  # (128,3,32,32)
             output = model(input)
 
             batch_size = input.size(0)
@@ -215,10 +215,10 @@ def predict(loader, model, verbose=False):
     }
 
 
-def predict_eval(loader, model, eval_image_path,verbose=False):
+def predict_eval(loader, model, eval_image_path, verbose=False):
     predictions = list()
     targets = list()
-    
+
     model.eval()
 
     if verbose:
@@ -229,36 +229,34 @@ def predict_eval(loader, model, eval_image_path,verbose=False):
 
     image_label = []
 
-    print('eval image path : ',eval_image_path)
+    print('eval image path : ', eval_image_path)
 
     with torch.no_grad():
 
-        for input, target in loader: # loader len = 79
+        for image, target in loader:  # loader len = 79
 
-            input = input.cuda(non_blocking=True) # (128,3,32,32)
-            output = model(input)
-           
-            batch_size = input.size(0)
+            # input = input.cuda(non_blocking=True) # (128,3,32,32)
+            image = image.to('cuda')  # (128,3,32,32)
+            output = model(image)
+            # output = model.base(image)
+
+            batch_size = image.size(0)
             predictions.append(F.softmax(output, dim=1).cpu().numpy())
             targets.append(target.numpy())
             offset += batch_size
-           
-            for img_id,img in enumerate(input):
 
-                save_image(denormalize_single(img),eval_image_path+'/img_'+str(image_id)+'.jpg')
+            for img_id, img in enumerate(image):
+                save_image(denormalize_single(img),
+                           eval_image_path+'/img_'+str(image_id)+'.jpg')
+                image_id += 1
 
-                image_id +=1
-
-
-    json.dump(image_label, open(eval_image_path+'/image_label.json','w'))
-    #json.dump(eval_img_prediction,open(eval_image_path+'/eval_img_prediction.json','w'))
-
+    json.dump(image_label, open(eval_image_path+'/image_label.json', 'w'))
+    # json.dump(eval_img_prediction,open(eval_image_path+'/eval_img_prediction.json','w'))
 
     return {
         'predictions': np.vstack(predictions),
         'targets': np.concatenate(targets)
     }
-
 
 
 def moving_average(net1, net2, alpha=1):
@@ -334,13 +332,13 @@ def bn_update(loader, model, verbose=False, subset=None, **kwargs):
     model.apply(lambda module: _set_momenta(module, momenta))
 
 
-def inv_softmax(x, eps = 1e-10):
+def inv_softmax(x, eps=1e-10):
     return torch.log(x/(1.0 - x + eps))
 
 
 def predictions(test_loader, model, seed=None, cuda=True, regression=False, **kwargs):
-    #will assume that model is already in eval mode
-    #model.eval()
+    # will assume that model is already in eval mode
+    # model.eval()
     preds = []
     targets = []
     for input, target in test_loader:
@@ -373,26 +371,29 @@ def schedule(epoch, lr_init, epochs, swa, swa_start=None, swa_lr=None):
 def set_weights(model, vector, device=None):
     offset = 0
     for param in model.parameters():
-        param.data.copy_(vector[offset:offset + param.numel()].view(param.size()).to(device))
+        param.data.copy_(
+            vector[offset:offset + param.numel()].view(param.size()).to(device))
         offset += param.numel()
 
+
 def extract_parameters(model):
-    params = []	
-    for module in model.modules():	
-        for name in list(module._parameters.keys()):	
-            if module._parameters[name] is None:	
-                continue	
-            param = module._parameters[name]	
-            params.append((module, name, param.size()))	
-            module._parameters.pop(name)	
+    params = []
+    for module in model.modules():
+        for name in list(module._parameters.keys()):
+            if module._parameters[name] is None:
+                continue
+            param = module._parameters[name]
+            params.append((module, name, param.size()))
+            module._parameters.pop(name)
     return params
 
-def set_weights_old(params, w, device):	
+
+def set_weights_old(params, w, device):
     offset = 0
     for module, name, shape in params:
-        size = np.prod(shape)	       
+        size = np.prod(shape)
         value = w[offset:offset + size]
-        setattr(module, name, value.view(shape).to(device))	
+        setattr(module, name, value.view(shape).to(device))
         offset += size
 
 
@@ -403,8 +404,10 @@ def nll(outputs, labels):
     nll = -np.sum(np.log(ps))
     return nll
 
+
 def accuracy(outputs, labels):
     return (np.argmax(outputs, axis=1) == labels).mean()
+
 
 def calibration_curve(outputs, labels, num_bins=20):
     confidences = np.max(outputs, 1)
@@ -412,11 +415,10 @@ def calibration_curve(outputs, labels, num_bins=20):
     bins = np.sort(confidences)[::step]
     if confidences.shape[0] % step != 1:
         bins = np.concatenate((bins, [np.max(confidences)]))
-    #bins = np.linspace(0.1, 1.0, 30)
-    predictions = np.argmax(outputs,1)
+    # bins = np.linspace(0.1, 1.0, 30)
+    predictions = np.argmax(outputs, 1)
     bin_lowers = bins[:-1]
     bin_uppers = bins[1:]
-
 
     accuracies = predictions == labels
 
@@ -424,7 +426,7 @@ def calibration_curve(outputs, labels, num_bins=20):
     ys = []
     zs = []
 
-    #ece = Variable(torch.zeros(1)).type_as(confidences)
+    # ece = Variable(torch.zeros(1)).type_as(confidences)
     ece = 0.0
     for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
         # Calculated |confidence - accuracy| in each bin

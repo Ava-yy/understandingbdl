@@ -1,4 +1,6 @@
-import torch, os, torchvision
+import torch
+import os
+import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 import pandas as pd
@@ -18,8 +20,8 @@ import argparse
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
-IMG_SIZE = (224, 224) 
-BATCH_SIZE = 1 
+IMG_SIZE = (224, 224)
+BATCH_SIZE = 1
 BATCH_SIZE_TRAIN = 8
 IMG_MEAN = [0.485, 0.456, 0.406]
 IMG_STD = [0.229, 0.224, 0.225]
@@ -30,7 +32,7 @@ BASE_PATH = './'
 TEST_SPLIT = 0.1
 epochs = 30
 
-# select classes in the given dataset 
+# select classes in the given dataset
 
 # Datasets = 'FOOD101'
 # # # Datasets = 'pascal voc'
@@ -50,8 +52,8 @@ epochs = 30
 #     CHOOSED_CLASSES = ['french_toast', 'greek_salad', 'caprese_salad', 'chocolate_cake', 'pizza', 'cup_cakes', 'carrot_cake','cheesecake','pancakes', 'strawberry_shortcake']
 # elif Datasets == 'pascal voc':
 #     CHOOSED_CLASSES = []
-#CHOOSED_CLASSES = ['candy_store','classroom','coffee_shop','computer_room','conference_center', 'conference_room', 'lecture_room', 'office', 'supermarket', 'toy#shop']
-CHOOSED_CLASSES = ['classroom','conference_room','supermarket']
+# CHOOSED_CLASSES = ['candy_store','classroom','coffee_shop','computer_room','conference_center', 'conference_room', 'lecture_room', 'office', 'supermarket', 'toy#shop']
+CHOOSED_CLASSES = ['classroom', 'conference_room', 'supermarket']
 # mask = all_img_df['category'].isin(CHOOSED_CLASSES)
 # all_img_df_selected = all_img_df.loc[mask]
 
@@ -93,7 +95,7 @@ CHOOSED_CLASSES = ['classroom','conference_room','supermarket']
 #         image = Image.open(image_path)
 
 #         image = self.transform(image)
-        
+
 #         return image, int(target),image_path,image_id
 
 #     def __len__(self):
@@ -109,12 +111,10 @@ batch_size = BATCH_SIZE_TRAIN
 num_workers = 4
 
 loaders, num_classes, _ = data_places365_10c.loaders(
-    os.path.join(data_path, dataset.lower()), #args.data_path, 
+    os.path.join(data_path, dataset.lower()),  # args.data_path,
     batch_size,
-    num_workers, 
+    num_workers,
     shuffle_train=True)
-
-
 
 
 # train_df, test_df = train_test_split(all_img_df_selected,
@@ -143,7 +143,7 @@ train_loader = loaders['train']
 test_loader = loaders['test']
 
 # vgg16 finetune
-model_ft = models.vgg16(pretrained=True) 
+model_ft = models.vgg16(pretrained=True)
 print(model_ft)
 # frozen all parameters
 for param in model_ft.parameters():
@@ -154,20 +154,20 @@ num_fc_ftr = 512 * 7 * 7
 print(num_fc_ftr)
 # modify fc to classifier
 model_ft.classifier = nn.Sequential(
-                        nn.Linear(in_features=num_fc_ftr, out_features=4096, bias=True),
-                        nn.ReLU(inplace=True),
-                        nn.Dropout(p=0.5, inplace=False),
-                        nn.Linear(in_features=4096, out_features=4096, bias=True),
-                        nn.ReLU(inplace=True),
-                        nn.Dropout(p=0.5, inplace=False),
-                        nn.Linear(in_features=4096, out_features=num_classes, bias=True),
-                      )
+    nn.Linear(in_features=num_fc_ftr, out_features=4096, bias=True),
+    nn.ReLU(inplace=True),
+    nn.Dropout(p=0.5, inplace=False),
+    nn.Linear(in_features=4096, out_features=4096, bias=True),
+    nn.ReLU(inplace=True),
+    nn.Dropout(p=0.5, inplace=False),
+    nn.Linear(in_features=4096, out_features=num_classes, bias=True),
+)
 print(model_ft.classifier)
 model_ft = model_ft.to(DEVICE)
 
 
 # # resent50 finetune
-# model_ft = models.resnet50(pretrained=True) 
+# model_ft = models.resnet50(pretrained=True)
 # for param in model_ft.parameters():
 #     param.requires_grad = False
 # print(model_ft.fc)
@@ -180,20 +180,23 @@ model_ft = model_ft.to(DEVICE)
 # model_ft = model_ft.to(DEVICE)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam([{'params': model_ft.classifier.parameters()}], lr=0.0001)
+optimizer = torch.optim.Adam(
+    [{'params': model_ft.classifier.parameters()}], lr=0.0001)
 
-def train(model,device, train_loader, epoch):
+
+def train(model, device, train_loader, epoch):
     model.train()
     for batch_idx, data in enumerate(tqdm(train_loader)):
-        image,label_id = data
-        image=image.to(device)
-        label_id=label_id.to(device)
+        image, label_id = data
+        image = image.to(device)
+        label_id = label_id.to(device)
         optimizer.zero_grad()
-        y_hat= model(image)
+        y_hat = model(image)
         loss = criterion(y_hat, label_id)
         loss.backward()
         optimizer.step()
-    print ('Train Epoch: {}\t Loss: {:.6f}'.format(epoch, loss.item()))
+    print('Train Epoch: {}\t Loss: {:.6f}'.format(epoch, loss.item()))
+
 
 def test(model, device, test_loader):
     model.eval()
@@ -207,39 +210,40 @@ def test(model, device, test_loader):
 
     with torch.no_grad():
 
-        for i,data in enumerate(tqdm(test_loader)):
+        for i, data in enumerate(tqdm(test_loader)):
 
-            image,label_id = data
+            image, label_id = data
 
-            #eval_image_path = "./eval_images"+image_path[0].split('./images')[1]
+            # eval_image_path = "./eval_images"+image_path[0].split('./images')[1]
 
-            #save_image(image[0],eval_image_path)
+            # save_image(image[0],eval_image_path)
 
             transform_norm = transforms.Compose([
                 transforms.Normalize(IMG_MEAN, IMG_STD)
             ])
-            
+
 #            image = transform_norm(image)
 
-            image=image.to(device)
-            label_id=label_id.to(device)
+            image = image.to(device)
+            label_id = label_id.to(device)
             optimizer.zero_grad()
             y_hat = model(image)
-            #print('test y_hat, label_id :',y_hat,label_id)
-            #print('y_hat shape : ',y_hat.shape) #(batch size, num of classes)
-            y_softmax = F.softmax(y_hat,dim=1)
-            #print('y_softmax : ',y_softmax.shape,y_softmax) #(batch size, num of classes)
-            #print('image_path, image_id',image_path,image_id)
+            # print('test y_hat, label_id :',y_hat,label_id)
+            # print('y_hat shape : ',y_hat.shape) #(batch size, num of classes)
+            y_softmax = F.softmax(y_hat, dim=1)
+            # print('y_softmax : ',y_softmax.shape,y_softmax) #(batch size, num of classes)
+            # print('image_path, image_id',image_path,image_id)
             # image_id_path_test_dict[i]=eval_image_path
             # image_path_id_test_dict[eval_image_path]=i
-            #softmax_result_list.append({'image_path':eval_image_path,'image_id':int(image_id.item()),'label_id':int(label_id.item()),'label':CHOOSED_CLASSES[label_id],'predict_softmax':y_softmax[0].tolist()})
+            # softmax_result_list.append({'image_path':eval_image_path,'image_id':int(image_id.item()),'label_id':int(label_id.item()),'label':CHOOSED_CLASSES[label_id],'predict_softmax':y_softmax[0].tolist()})
             # print(softmax_result_list)
-            test_loss += criterion(y_hat, label_id).item() # sum up batch loss
-            pred = y_hat.max(1, keepdim=True)[1] # get the index of the max log-probability
-            #print('pred : ',pred)
-            #print('correct add:',pred.eq(label_id.view_as(pred)).sum().item())
+            test_loss += criterion(y_hat, label_id).item()  # sum up batch loss
+            # get the index of the max log-probability
+            pred = y_hat.max(1, keepdim=True)[1]
+            # print('pred : ',pred)
+            # print('correct add:',pred.eq(label_id.view_as(pred)).sum().item())
             correct += pred.eq(label_id.view_as(pred)).sum().item()
-    print('len of test:',len(test_loader.dataset))
+    print('len of test:', len(test_loader.dataset))
     test_loss /= len(test_loader.dataset)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
@@ -248,21 +252,17 @@ def test(model, device, test_loader):
     # json.dump(image_id_path_test_dict,open('./image_id_path_test_dict.json','w'))
     # json.dump(image_path_id_test_dict,open('./image_path_id_test_dict.json','w'))
 
-    #return softmax_result_list
+    # return softmax_result_list
+
 
 model_ft = torch.load('places365_3c_vgg16_finetune.pt')
-print('test loader len:',len(test_loader.dataset))
+print('test loader len:', len(test_loader.dataset))
 for epoch in range(epochs):
  #   train(model=model_ft,device=DEVICE, train_loader=train_loader, epoch=epoch)
-  
-  softmax_result_list = test(model=model_ft, device=DEVICE, test_loader=test_loader)
-    
-#torch.save(model_ft,'places365_3c_vgg16_finetune.pt')
 
-#json.dump(softmax_result_list,open('./food101_finetune_test_result.json','w'))
+    softmax_result_list = test(
+        model=model_ft, device=DEVICE, test_loader=test_loader)
 
+# torch.save(model_ft,'places365_3c_vgg16_finetune.pt')
 
-
-
-
-
+# json.dump(softmax_result_list,open('./food101_finetune_test_result.json','w'))

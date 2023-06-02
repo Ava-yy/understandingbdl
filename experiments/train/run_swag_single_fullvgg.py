@@ -179,9 +179,9 @@ torch.cuda.manual_seed(args.seed)
 print("Loading data from %s" % (args.data_path))
 
 loaders, num_classes, _ = data_places365_10c.loaders(
-    os.path.join(args.data_path, args.dataset.lower()), #args.data_path, 
+    os.path.join(args.data_path, args.dataset.lower()), #args.data_path,
     args.batch_size,
-    args.num_workers, 
+    args.num_workers,
     shuffle_train=True)
 
 

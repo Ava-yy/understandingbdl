@@ -1,5 +1,5 @@
 import argparse
-import os, sys 
+import os, sys
 import time
 import tabulate
 
@@ -17,21 +17,22 @@ from swag import data_places365_10c
 
 parser = argparse.ArgumentParser(description='SGD/SWA training')
 parser.add_argument('--savedir', type=str, default=None, required=True, help='training directory (default: None)')
-parser.add_argument('--swag_ckpts', type=str, nargs='*', required=True, 
+parser.add_argument('--swag_ckpts', type=str, nargs='*', required=True,
                     help='list of SWAG checkpoints')
+parser.add_argument('--model_id', default='1', help="")
 
 parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset name (default: CIFAR10)')
 parser.add_argument('--data_path', type=str, default=None, required=True, metavar='PATH',
                     help='path to datasets location (default: None)')
 parser.add_argument('--use_test', dest='use_test', action='store_true', help='use test dataset instead of validation (default: False)')
-parser.add_argument('--batch_size', type=int, default=128, metavar='N', help='input batch size (default: 128)')
+parser.add_argument('--batch_size', type=int, default=16, metavar='N', help='input batch size (default: 16)')
 parser.add_argument('--num_workers', type=int, default=4, metavar='N', help='number of workers (default: 4)')
 parser.add_argument('--model', type=str, default=None, required=True, metavar='model',
                     help='model name (default: none)')
 parser.add_argument('--label_arr', default=None, help="shuffled label array")
 
 parser.add_argument('--max_num_models', type=int, default=20, help='maximum number of SWAG models to save')
-parser.add_argument('--swag_samples', type=int, default=20, metavar='N', 
+parser.add_argument('--swag_samples', type=int, default=20, metavar='N',
                     help='number of samples from each SWAG model (default: 20)')
 
 args = parser.parse_args()
@@ -40,11 +41,11 @@ args.subspace = 'covariance'
 args.no_cov_mat = False
 
 
-args.device = None
 if torch.cuda.is_available():
     args.device = torch.device('cuda')
 else:
     args.device = torch.device('cpu')
+# args.device = 'cuda'
 
 
 torch.backends.cudnn.benchmark = True
@@ -65,9 +66,9 @@ torch.backends.cudnn.benchmark = True
 
 # places365 data loader
 loaders, num_classes,val_images_names_labels = data_places365_10c.loaders(
-    os.path.join(args.data_path, args.dataset.lower()), #args.data_path, 
+    os.path.join(args.data_path, args.dataset.lower()), #args.data_path,
     args.batch_size,
-    args.num_workers, 
+    args.num_workers,
     # model_cfg.transform_train,
     # model_cfg.transform_test,
     shuffle_train=True)
@@ -87,8 +88,8 @@ if args.label_arr:
 
 
 model_class = getattr(torchvision.models, args.model)
-print('model_class',model_class)
-model = torch.load(os.path.join("./","places365_3c_vgg16_finetune.pt"))
+print('model_class', model_class)
+model = torch.load(os.path.join("./", "places365_3c_vgg16_finetune.pt"))
 model.to(args.device)
 
 
@@ -99,7 +100,7 @@ model.to(args.device)
 
 swag_model = SWAG_single(
     model_class,
-    no_cov_mat=not args.cov_mat,
+    no_cov_mat=args.no_cov_mat,
     # loading=True,
     max_num_models=20,
     num_classes=num_classes,
@@ -133,8 +134,17 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
 
         swag_model.sample(.5)
         utils.bn_update(loaders['train'], swag_model)
-       
-        res = utils.predict_eval(loaders['test'],swag_model,eval_image_path = args.savedir+'eval_images',verbose=False)
+
+
+        swag_model.to('cpu')
+        res = utils.predict_eval(
+            loaders['test'],
+            swag_model,
+            eval_image_path=args.savedir+'eval_images',
+            verbose=False
+        )
+        swag_model.to('cuda')
+
 
         probs = res['predictions']
         targets = res['targets']
@@ -150,7 +160,7 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
             multiswag_probs = probs.copy()
         else:
             #TODO: rewrite in a numerically stable way
-            multiswag_probs +=  (probs - multiswag_probs)/ (n_ensembled + 1)
+            multiswag_probs += (probs - multiswag_probs) / (n_ensembled + 1)
         n_ensembled += 1
 
         ens_nll = utils.nll(multiswag_probs, targets)
@@ -159,17 +169,23 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
         table = tabulate.tabulate([values], columns, tablefmt='simple', floatfmt='8.4f')
         print(table)
 
-    total_predictions.append(swag_predictions)
+    swag_predictions = np.array(swag_predictions)
+    for img_id, image_data in enumerate( swag_predictions.transpose(1, 0, 2) ):
+        np.save(
+            open(os.path.join(args.savedir, f'image_data/image_{img_id}_data_{args.model_id}.npy'),'wb'),
+            image_data
+        )
 
-total_predictions = np.array(total_predictions) #(n_models,n_samples,n_images,n_classes)
+    # total_predictions.append(swag_predictions)
+# total_predictions = np.array(total_predictions) #(n_models,n_samples,n_images,n_classes)
 
-print('total_predictions.shape : ',total_predictions.shape)
+# print('total_predictions.shape : ',total_predictions.shape)
 
-total_predictions = total_predictions.transpose(1,2,0,3)
+# total_predictions = total_predictions.transpose(1,2,0,3)
 
-for img_id, image_data in enumerate(total_predictions.transpose(1,2,0,3)):
+# for img_id, image_data in enumerate(total_predictions.transpose(1,2,0,3)):
 
-    np.save(open(os.path.join(args.savedir,'./image_'+str(img_id)+'_data.npy'),'wb'),image_data)
+    # np.save(open(os.path.join(args.savedir,'./image_'+str(img_id)+'_data.npy'),'wb'),image_data)
 
 
 # print('Preparing directory %s' % args.savedir)

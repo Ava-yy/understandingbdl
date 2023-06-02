@@ -187,7 +187,7 @@ class SWAG_single(torch.nn.Module):
                     "%s_cov_mat_sqrt" % name,
                     mean.new_empty((rank, mean.numel())).zero_(),
                 )
-        super(SWAG, self).load_state_dict(state_dict, strict)
+        super(SWAG_single, self).load_state_dict(state_dict, strict)
 
     def export_numpy_params(self, export_cov_mat=False):
         mean_list = []
