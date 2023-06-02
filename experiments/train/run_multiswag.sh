@@ -1,16 +1,13 @@
 # Run and evaluate MultiSWAG
 DATAPATH=../../datasets/
 DATASET=places365_3c #CIFAR100
-MODEL='vgg16'
+MODEL='resnet50'
 
-# EPOCHS=2
-# SWAG_START=1
-# SWAG_SAMPLES=7
 EPOCHS=300
 SWAG_START=161
 SWAG_SAMPLES=20
 
-BASEDIR=ckpts/places365_multiswag_3c
+BASEDIR=ckpts/places365_multiswag_3c_resnet50
 
 # places365_multiswag_smallvgg
 # places365_multiswag_fullvgg 
@@ -21,7 +18,6 @@ SWAG_RUNS=3
 LR=0.01
 WD=1e-4
 SWAG_LR=0.01
-echo ${WD}
 
 CKPT_FILES=""
 
@@ -52,21 +48,24 @@ do
     CKPT_FILES+=" "${BASEDIR}/swag_${seed}/swag-${EPOCHS}.pt
 done
 
-for ((model_id=1; model_id<=$SWAG_RUNS; model_id++ ))
-do
-    CKPT_FILES=" "${BASEDIR}/swag_${model_id}/swag-${EPOCHS}.pt
-    python3 eval_multiswag_single_fullvgg.py \
-        --data_path=$DATAPATH \
-        --dataset=$DATASET \
-        --model=$MODEL \
-        --model_id=$model_id \
-        --use_test \
-        --swag_ckpts \
-        --swag_samples=$SWAG_SAMPLES \
-        --swag_ckpts${CKPT_FILES}  \
-        --savedir=$BASEDIR/multiswag/
-done
 
+# for ((model_id=1; model_id<=$SWAG_RUNS; model_id++ ))
+# do
+#     CKPT_FILES=" "${BASEDIR}/swag_${model_id}/swag-${EPOCHS}.pt
+#     python3 eval_multiswag_single_fullvgg.py \
+#         --data_path=$DATAPATH \
+#         --dataset=$DATASET \
+#         --model=$MODEL \
+#         --model_id=$model_id \
+#         --use_test \
+#         --swag_ckpts \
+#         --swag_samples=$SWAG_SAMPLES \
+#         --swag_ckpts${CKPT_FILES}  \
+#         --savedir=$BASEDIR/multiswag/
+# done
+
+python3 eval_multiswag_single_fullvgg.py --data_path=$DATAPATH --dataset=$DATASET --model=$MODEL --use_test --swag_ckpts \
+  --swag_samples=$SWAG_SAMPLES --swag_ckpts${CKPT_FILES}  --savedir=$BASEDIR/multiswag/
 
 
 

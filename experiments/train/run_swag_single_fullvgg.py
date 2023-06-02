@@ -43,7 +43,7 @@ parser.add_argument(
 parser.add_argument(
     "--batch_size",
     type=int,
-    default=64, #256,
+    default=128, #256,
     metavar="N",
     help="input batch size (default: 256)",
 )
@@ -192,7 +192,7 @@ print("Preparing model")
 # model.to(args.device)
 
 print('model_class',model_class)
-model = torch.load(os.path.join("./","places365_3c_vgg16_finetune.pt"))
+model = torch.load(os.path.join("./","places365_3c_resnet50_finetune.pt"))
 model.to(args.device)
 
 

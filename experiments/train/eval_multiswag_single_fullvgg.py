@@ -89,7 +89,7 @@ if args.label_arr:
 
 model_class = getattr(torchvision.models, args.model)
 print('model_class', model_class)
-model = torch.load(os.path.join("./", "places365_3c_vgg16_finetune.pt"))
+model = torch.load(os.path.join("./", "places365_3c_resnet50_finetune.pt"))
 model.to(args.device)
 
 
@@ -135,7 +135,6 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
         swag_model.sample(.5)
         utils.bn_update(loaders['train'], swag_model)
 
-
         swag_model.to('cpu')
         res = utils.predict_eval(
             loaders['test'],
@@ -144,7 +143,6 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
             verbose=False
         )
         swag_model.to('cuda')
-
 
         probs = res['predictions']
         targets = res['targets']
@@ -169,23 +167,24 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
         table = tabulate.tabulate([values], columns, tablefmt='simple', floatfmt='8.4f')
         print(table)
 
-    swag_predictions = np.array(swag_predictions)
-    for img_id, image_data in enumerate( swag_predictions.transpose(1, 0, 2) ):
-        np.save(
-            open(os.path.join(args.savedir, f'image_data/image_{img_id}_data_{args.model_id}.npy'),'wb'),
-            image_data
-        )
+    # swag_predictions = np.array(swag_predictions) # (n_samples,n_images,n_classes)
+    # for img_id, image_data in enumerate(swag_predictions.transpose(1, 0, 2) ):
+    #     np.save(
+    #         open(os.path.join(args.savedir, f'image_{img_id}_data_{args.model_id}.npy'),'wb'),
+    #         image_data
+    #     )
 
-    # total_predictions.append(swag_predictions)
-# total_predictions = np.array(total_predictions) #(n_models,n_samples,n_images,n_classes)
+    total_predictions.append(swag_predictions)
+    
+total_predictions = np.array(total_predictions) #(n_models,n_samples,n_images,n_classes)
 
-# print('total_predictions.shape : ',total_predictions.shape)
+print('total_predictions.shape : ',total_predictions.shape)
 
-# total_predictions = total_predictions.transpose(1,2,0,3)
+total_predictions = total_predictions.transpose(1,2,0,3)
 
-# for img_id, image_data in enumerate(total_predictions.transpose(1,2,0,3)):
+for img_id, image_data in enumerate(total_predictions.transpose(1,2,0,3)):
 
-    # np.save(open(os.path.join(args.savedir,'./image_'+str(img_id)+'_data.npy'),'wb'),image_data)
+    np.save(open(os.path.join(args.savedir,'./image_'+str(img_id)+'_data.npy'),'wb'),image_data)
 
 
 # print('Preparing directory %s' % args.savedir)

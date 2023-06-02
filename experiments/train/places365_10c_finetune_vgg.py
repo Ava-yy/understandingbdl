@@ -30,7 +30,7 @@ DEVICE = torch.device("cuda" if CUDA else "cpu")
 
 BASE_PATH = './'
 TEST_SPLIT = 0.1
-epochs = 30
+epochs = 20
 
 # select classes in the given dataset
 
@@ -142,46 +142,53 @@ train_loader = loaders['train']
 
 test_loader = loaders['test']
 
-# vgg16 finetune
-model_ft = models.vgg16(pretrained=True)
-print(model_ft)
-# frozen all parameters
-for param in model_ft.parameters():
-    param.requires_grad = False
-print(model_ft.classifier)
-
-num_fc_ftr = 512 * 7 * 7
-print(num_fc_ftr)
-# modify fc to classifier
-model_ft.classifier = nn.Sequential(
-    nn.Linear(in_features=num_fc_ftr, out_features=4096, bias=True),
-    nn.ReLU(inplace=True),
-    nn.Dropout(p=0.5, inplace=False),
-    nn.Linear(in_features=4096, out_features=4096, bias=True),
-    nn.ReLU(inplace=True),
-    nn.Dropout(p=0.5, inplace=False),
-    nn.Linear(in_features=4096, out_features=num_classes, bias=True),
-)
-print(model_ft.classifier)
-model_ft = model_ft.to(DEVICE)
-
-
-# # resent50 finetune
-# model_ft = models.resnet50(pretrained=True)
+# # vgg16 finetune
+# model_ft = models.vgg16(pretrained=True)
+# print(model_ft)
+# # frozen all parameters
 # for param in model_ft.parameters():
 #     param.requires_grad = False
-# print(model_ft.fc)
+# print(model_ft.classifier)
 
-# num_fc_ftr = model_ft.fc.in_features
+# num_fc_ftr = 512 * 7 * 7
 # print(num_fc_ftr)
-
-# model_ft.fc = nn.Linear(num_fc_ftr, len(CHOOSED_CLASSES))
-# print(model_ft.fc)
+# # modify fc to classifier
+# model_ft.classifier = nn.Sequential(
+#     nn.Linear(in_features=num_fc_ftr, out_features=4096, bias=True),
+#     nn.ReLU(inplace=True),
+#     nn.Dropout(p=0.5, inplace=False),
+#     nn.Linear(in_features=4096, out_features=4096, bias=True),
+#     nn.ReLU(inplace=True),
+#     nn.Dropout(p=0.5, inplace=False),
+#     nn.Linear(in_features=4096, out_features=num_classes, bias=True),
+# )
+# print(model_ft.classifier)
 # model_ft = model_ft.to(DEVICE)
 
+
+# resent50 finetune
+model_ft = models.resnet50(pretrained=True)
+for param in model_ft.parameters():
+    param.requires_grad = False
+print(model_ft.fc)
+
+num_fc_ftr = model_ft.fc.in_features
+print(num_fc_ftr)
+
+model_ft.fc = nn.Linear(num_fc_ftr, len(CHOOSED_CLASSES))
+print(model_ft.fc)
+model_ft = model_ft.to(DEVICE)
+
 criterion = nn.CrossEntropyLoss()
+
+# #vgg
+# optimizer = torch.optim.Adam(
+#     [{'params': model_ft.classifier.parameters()}], lr=0.0001)
+
+
+# resnet
 optimizer = torch.optim.Adam(
-    [{'params': model_ft.classifier.parameters()}], lr=0.0001)
+    [{'params': model_ft.parameters()}], lr=0.0001)
 
 
 def train(model, device, train_loader, epoch):
@@ -255,14 +262,14 @@ def test(model, device, test_loader):
     # return softmax_result_list
 
 
-model_ft = torch.load('places365_3c_vgg16_finetune.pt')
+#model_ft = torch.load('places365_3c_resnet50_finetune.pt')
 print('test loader len:', len(test_loader.dataset))
 for epoch in range(epochs):
- #   train(model=model_ft,device=DEVICE, train_loader=train_loader, epoch=epoch)
+    train(model=model_ft,device=DEVICE, train_loader=train_loader, epoch=epoch)
 
     softmax_result_list = test(
         model=model_ft, device=DEVICE, test_loader=test_loader)
 
-# torch.save(model_ft,'places365_3c_vgg16_finetune.pt')
+torch.save(model_ft,'places365_3c_renset50_finetune.pt')
 
 # json.dump(softmax_result_list,open('./food101_finetune_test_result.json','w'))
