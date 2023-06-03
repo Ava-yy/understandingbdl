@@ -50,7 +50,7 @@ def loaders(path, batch_size, num_workers, shuffle_train=True):
     # class_name=['candy_store','classroom','coffee_shop','computer_room','conference_center', 'conference_room', 'lecture_room', 'office', 'supermarket', 'toyshop']
     #[80,92,99,100,101,102,210,244,321,335]
 
-    class_name = ['classroom','conference_room','supermarket']
+    class_name = ['classroom','conference_room','office']
             
     # class_name=classes_list
     class_to_idx=dict(zip(class_name,range(len(class_name))))

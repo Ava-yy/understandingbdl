@@ -22,9 +22,7 @@ base_dir_0 = '/home/zhaoy32/Desktop/understandingbdl/experiments/train/ckpts/'
 
 dataset_name = 'places365_3c'
 
-#dataset_dir = 'places365_multiswag_smallvgg'
-
-dataset_dir = dataset_name
+dataset_dir = 'places365_multiswag_3c_resnet50'
 
 base_dir = os.path.join(base_dir_0,dataset_dir,'multiswag')
 
@@ -98,11 +96,18 @@ def gmm_3c():
 
     coord_data = client_data['coord_data'] # all pixel coord including pixels inside of the triangle
 
-    img_data = np.load(open(os.path.join(base_dir_0,dataset_dir,'multiswag/image_data/image_'+str(image_id)+'_data.npy'),'rb'))
+    img_data = np.load(open(os.path.join(base_dir,'image_data/image_'+str(image_id)+'_data.npy'),'rb'))
 
     # print('img_data.shape: ',img_data.shape)
 
     img_data = img_data.reshape((-1,img_data.shape[-1]))
+
+    print('img_data shape : ',img_data.shape)
+
+    print('img_data sum : ',np.sum(img_data))
+    # img_data = np.random.rand(60,3)
+
+    # img_data = img_data/img_data.sum(axis=0)
 
     gmm_model = mixture.GaussianMixture(n_components=n_components, covariance_type='full', random_state=0)
 
@@ -116,7 +121,7 @@ def gmm_3c():
 
     predictions_prob = gmm_data.predict_proba(coord_data)
 
-    score_samples =gmm_data.score_samples(coord_data)
+    score_samples = gmm_data.score_samples(coord_data)
 
     return flask.jsonify({
         'data':img_data.tolist(),
@@ -131,41 +136,41 @@ def gmm_3c():
         'score_samples':score_samples.tolist()})
  
 
-@app.route('/gmm', methods=['GET','POST'])
+# @app.route('/gmm', methods=['GET','POST'])
 
-def gmm():
+# def gmm():
 
-    client_data = flask.request.json
+#     client_data = flask.request.json
    
-    image_id = client_data['image_id']
+#     image_id = client_data['image_id']
 
-    n_components = client_data['n_components']
+#     n_components = client_data['n_components']
 
-    img_data = np.load(open(os.path.join(base_dir_0,dataset_dir,'multiswag/image_data/image_'+str(image_id)+'_data.npy'),'rb'))
+#     img_data = np.load(open(os.path.join(base_dir_0,dataset_dir,'multiswag/image_data/image_'+str(image_id)+'_data.npy'),'rb'))
 
-    img_data = img_data.reshape((-1,img_data.shape[-1]))
+#     img_data = img_data.reshape((-1,img_data.shape[-1]))
 
-    gmm_model = mixture.GaussianMixture(n_components=n_components, covariance_type='full', random_state=0)
+#     gmm_model = mixture.GaussianMixture(n_components=n_components, covariance_type='full', random_state=0)
 
-    gmm_data = gmm_model.fit(img_data)
+#     gmm_data = gmm_model.fit(img_data)
 
-    predictions = gmm_data.predict(img_data)
+#     predictions = gmm_data.predict(img_data)
 
-    predictions_prob = gmm_data.predict_proba(img_data)
+#     predictions_prob = gmm_data.predict_proba(img_data)
 
-    score_samples =gmm_data.score_samples(img_data)
+#     score_samples =gmm_data.score_samples(img_data)
 
-    return flask.jsonify({
-        'data':img_data.tolist(),
-        'mean': gmm_data.means_.tolist() ,
-        'covariance': gmm_data.covariances_.tolist(),
-        'weights': gmm_data.weights_.tolist(),
-        'predictions': predictions.tolist(), 
-        'predictions_proba': predictions_prob.tolist(),
-        'converged': gmm_data.converged_,
-        'AIC':gmm_data.aic(img_data),
-        'BIC':gmm_data.bic(img_data),
-        'score_samples':score_samples.tolist()})
+#     return flask.jsonify({
+#         'data':img_data.tolist(),
+#         'mean': gmm_data.means_.tolist() ,
+#         'covariance': gmm_data.covariances_.tolist(),
+#         'weights': gmm_data.weights_.tolist(),
+#         'predictions': predictions.tolist(), 
+#         'predictions_proba': predictions_prob.tolist(),
+#         'converged': gmm_data.converged_,
+#         'AIC':gmm_data.aic(img_data),
+#         'BIC':gmm_data.bic(img_data),
+#         'score_samples':score_samples.tolist()})
   
 
 @app.route('/image_data', methods=['GET','POST'])
@@ -202,7 +207,7 @@ def image_data_3c():
    
     image_id = client_data['image_id']
 
-    img_data = np.load(open(os.path.join('/home/zhaoy32/Desktop/understandingbdl/experiments/train/ckpts/places365_3c/multiswag/image_data/image_'+str(image_id)+'_data.npy'),'rb'))
+    img_data = np.load(open(os.path.join('/home/zhaoy32/Desktop/understandingbdl/experiments/train/ckpts/places365_multiswag_3c_resnet50/multiswag/image_data/image_'+str(image_id)+'_data.npy'),'rb'))
 
     img_data = img_data.reshape((-1,img_data.shape[-1]))
    

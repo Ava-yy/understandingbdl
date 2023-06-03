@@ -7,7 +7,9 @@ import tabulate
 
 import torch
 import torch.nn.functional as F
-import torchvision.models
+import torch.nn as nn
+import torchvision.models as Models
+import torchvision
 
 # import data
 # from swag import utils, losses
@@ -158,6 +160,8 @@ parser.add_argument("--no_schedule", action="store_true", help="store schedule")
 
 args = parser.parse_args()
 
+CHOOSED_CLASSES = ['classroom', 'conference_room', 'office']
+
 args.device = None
 if torch.cuda.is_available():
     args.device = torch.device("cuda")
@@ -188,13 +192,31 @@ loaders, num_classes, _ = data_places365_10c.loaders(
 model_class = getattr(torchvision.models, args.model)
 
 print("Preparing model")
-# model = model_class(pretrained=args.pretrained, num_classes=num_classes)
+# # model = model_class(pretrained=args.pretrained, num_classes=num_classes)
+# # model.to(args.device)
+
+# print('model_class',model_class)
+# model = torch.load(os.path.join("./","places365_3c_resnet50_finetune.pt"))
 # model.to(args.device)
 
-print('model_class',model_class)
-model = torch.load(os.path.join("./","places365_3c_resnet50_finetune.pt"))
-model.to(args.device)
 
+
+# train swag model based on model pretrained on ImageNet 
+
+model = Models.resnet50(pretrained=True)
+for param in model.parameters():
+    param.requires_grad = False
+print(model.fc)
+
+num_fc_ftr = model.fc.in_features
+print(num_fc_ftr)
+
+model.fc = nn.Linear(num_fc_ftr, len(CHOOSED_CLASSES))
+# print(model_ft.fc)
+model = model.to(args.device)
+
+
+criterion = nn.CrossEntropyLoss()
 
 if args.cov_mat:
     args.no_cov_mat = False

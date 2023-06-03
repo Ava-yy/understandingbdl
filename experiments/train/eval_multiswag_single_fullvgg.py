@@ -89,8 +89,9 @@ if args.label_arr:
 
 model_class = getattr(torchvision.models, args.model)
 print('model_class', model_class)
-model = torch.load(os.path.join("./", "places365_3c_resnet50_finetune.pt"))
-model.to(args.device)
+
+# model = torch.load(os.path.join("./", "places365_3c_resnet50_finetune.pt"))
+# model.to(args.device)
 
 
 # swag_model = SWAG(model_cfg.base,
@@ -175,7 +176,7 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
     #     )
 
     total_predictions.append(swag_predictions)
-    
+
 total_predictions = np.array(total_predictions) #(n_models,n_samples,n_images,n_classes)
 
 print('total_predictions.shape : ',total_predictions.shape)
