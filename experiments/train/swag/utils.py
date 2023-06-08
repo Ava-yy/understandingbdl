@@ -13,7 +13,8 @@ import sys
 
 import torch.nn.functional as F
 from torchvision.utils import save_image
-
+import torchvision.transforms as transforms
+from PIL import Image
 
 def get_logging_print(fname):
     cur_time = strftime("%m-%d_%H:%M:%S", gmtime())
@@ -212,6 +213,45 @@ def predict(loader, model, verbose=False):
     return {
         'predictions': np.vstack(predictions),
         'targets': np.concatenate(targets)
+    }
+
+
+def predict_eval_single(model, image_path, eval_image_path, verbose=False):
+
+    predictions = list()
+    targets = list()
+
+    model.eval()
+    image_id = 0
+    image_label = []
+    print('eval image path : ', eval_image_path)
+
+    IMG_SIZE = (224, 224) 
+    IMG_MEAN = [0.485, 0.456, 0.406]
+    IMG_STD = [0.229, 0.224, 0.225]
+
+    test_transform = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(IMG_SIZE),
+        transforms.ToTensor(),
+        transforms.Normalize(IMG_MEAN, IMG_STD)
+    ])
+
+    with torch.no_grad():
+
+        # input = input.cuda(non_blocking=True) # (128,3,32,32)
+        image = Image.open(image_path)
+
+        image_transformed = test_transform(image).unsqueeze(0)
+        img = image_transformed.to('cuda')  # (128,3,32,32)
+        output = model(img)
+
+        prediction = F.softmax(output, dim=1).cpu().numpy()
+
+        #save_image(denormalize_single(img), os.path.join(eval_image_path,image_path))
+
+    return {
+        'prediction': predictions,
     }
 
 

@@ -160,7 +160,9 @@ parser.add_argument("--no_schedule", action="store_true", help="store schedule")
 
 args = parser.parse_args()
 
-CHOOSED_CLASSES = ['classroom', 'conference_room', 'office']
+CHOOSED_CLASSES = ['bar','banquet_hall','beer_hall','cafeteria','coffee_shop', 'dining_hall', 'food_court', 'fastfood_restaurant','restaurant_patio','sushi_bar']
+            
+#['classroom', 'conference_room', 'office']
 
 args.device = None
 if torch.cuda.is_available():
@@ -312,9 +314,9 @@ for epoch in range(start_epoch, args.epochs):
             )
 
             num_iterates += 1
-            utils.save_checkpoint(
-                args.dir, num_iterates, name="iter", state_dict=model.state_dict()
-            )
+            # utils.save_checkpoint(
+            #     args.dir, num_iterates, name="iter", state_dict=model.state_dict()
+            # )
 
             model.to(args.swa_device)
             swag_model.collect_model(model)

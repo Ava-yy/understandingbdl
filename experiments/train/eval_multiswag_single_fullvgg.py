@@ -17,8 +17,7 @@ from swag import data_places365_10c
 
 parser = argparse.ArgumentParser(description='SGD/SWA training')
 parser.add_argument('--savedir', type=str, default=None, required=True, help='training directory (default: None)')
-parser.add_argument('--swag_ckpts', type=str, nargs='*', required=True,
-                    help='list of SWAG checkpoints')
+parser.add_argument('--swag_ckpts', type=str, nargs='*', required=True, help='list of SWAG checkpoints')
 parser.add_argument('--model_id', default='1', help="")
 
 parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset name (default: CIFAR10)')
@@ -35,11 +34,11 @@ parser.add_argument('--max_num_models', type=int, default=20, help='maximum numb
 parser.add_argument('--swag_samples', type=int, default=20, metavar='N',
                     help='number of samples from each SWAG model (default: 20)')
 
+
 args = parser.parse_args()
 args.inference = 'low_rank_gaussian'
 args.subspace = 'covariance'
 args.no_cov_mat = False
-
 
 if torch.cuda.is_available():
     args.device = torch.device('cuda')
@@ -119,7 +118,7 @@ print('Preparing directory %s' % args.savedir)
 os.makedirs(args.savedir, exist_ok=True)
 os.makedirs(args.savedir+'eval_images',exist_ok=True)
 
-json.dump(val_images_names_labels,open(os.path.join(args.savedir,'places365_3c_val_fn_list.json'),'w'))
+json.dump(val_images_names_labels,open(os.path.join(args.savedir,'places365_10c_val_fn_list.json'),'w'))
 
 total_predictions = []
 
@@ -136,14 +135,12 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
         swag_model.sample(.5)
         utils.bn_update(loaders['train'], swag_model)
 
-        swag_model.to('cpu')
         res = utils.predict_eval(
             loaders['test'],
             swag_model,
             eval_image_path=args.savedir+'eval_images',
             verbose=False
         )
-        swag_model.to('cuda')
 
         probs = res['predictions']
         targets = res['targets']
