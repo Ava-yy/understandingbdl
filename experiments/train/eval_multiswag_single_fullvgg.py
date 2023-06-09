@@ -127,12 +127,11 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
     checkpoint = torch.load(ckpt)
     #swag_model.subspace.rank = torch.tensor(0)
     swag_model.load_state_dict(checkpoint['state_dict'])
-
     swag_predictions = []
 
     for sample in enumerate(range(args.swag_samples)):
-
         swag_model.sample(.5)
+        #print('start bn_update')
         utils.bn_update(loaders['train'], swag_model)
 
         res = utils.predict_eval(
@@ -141,7 +140,6 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
             eval_image_path=args.savedir+'eval_images',
             verbose=False
         )
-
         probs = res['predictions']
         targets = res['targets']
 
@@ -171,7 +169,7 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
     #         open(os.path.join(args.savedir, f'image_{img_id}_data_{args.model_id}.npy'),'wb'),
     #         image_data
     #     )
-    np.save(open(os.path.join(args.savedir,'image_data','swag_data_'+str(ckpt_i)+'.npy','wb')),swag_predictions)
+    np.save(open(os.path.join(args.savedir,'image_data','swag_data_'+str(ckpt_i)+'.npy'),'wb'),swag_predictions)
     total_predictions.append(swag_predictions)
 
 total_predictions = np.array(total_predictions) #(n_models,n_samples,n_images,n_classes)

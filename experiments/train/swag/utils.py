@@ -285,10 +285,14 @@ def predict_eval(loader, model, eval_image_path, verbose=False):
             targets.append(target.numpy())
             offset += batch_size
 
-            for img_id, img in enumerate(image):
-                save_image(denormalize_single(img),
-                           eval_image_path+'/img_'+str(image_id)+'.jpg')
-                image_id += 1
+            print('start eval image')
+            if not os.path.exists(eval_image_path):
+
+                print('save image')
+                for img_id, img in enumerate(image):
+                    save_image(denormalize_single(img),
+                               eval_image_path+'/img_'+str(image_id)+'.jpg')
+                    image_id += 1
 
     # json.dump(image_label, open(eval_image_path+'/image_label.json', 'w'))
     # json.dump(eval_img_prediction,open(eval_image_path+'/eval_img_prediction.json','w'))

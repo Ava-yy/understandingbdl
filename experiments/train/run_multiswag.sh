@@ -5,7 +5,7 @@ MODEL='resnet50'
 
 EPOCHS=100 #70
 SWAG_START=50 #40
-SWAG_SAMPLES=100
+SWAG_SAMPLES=2
 
 BASEDIR=ckpts/places365_multiswag_10c #_5swag
 
