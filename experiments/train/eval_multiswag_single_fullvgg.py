@@ -24,7 +24,7 @@ parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset name
 parser.add_argument('--data_path', type=str, default=None, required=True, metavar='PATH',
                     help='path to datasets location (default: None)')
 parser.add_argument('--use_test', dest='use_test', action='store_true', help='use test dataset instead of validation (default: False)')
-parser.add_argument('--batch_size', type=int, default=16, metavar='N', help='input batch size (default: 16)')
+parser.add_argument('--batch_size', type=int, default=64, metavar='N', help='input batch size (default: 16)')
 parser.add_argument('--num_workers', type=int, default=4, metavar='N', help='number of workers (default: 4)')
 parser.add_argument('--model', type=str, default=None, required=True, metavar='model',
                     help='model name (default: none)')
@@ -145,7 +145,7 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
         probs = res['predictions']
         targets = res['targets']
 
-        json.dump(targets.tolist(), open(os.path.join(args.savedir,'image_label.json'),'w'))
+        #json.dump(targets.tolist(), open(os.path.join(args.savedir,'image_label.json'),'w'))
 
         swag_predictions.append(probs) # (n_samples,n_images,n_classes)
 
@@ -171,7 +171,7 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
     #         open(os.path.join(args.savedir, f'image_{img_id}_data_{args.model_id}.npy'),'wb'),
     #         image_data
     #     )
-
+    np.save(open(os.path.join(args.savedir,'image_data','swag_data_'+str(ckpt_i)+'.npy','wb')),swag_predictions)
     total_predictions.append(swag_predictions)
 
 total_predictions = np.array(total_predictions) #(n_models,n_samples,n_images,n_classes)
@@ -182,7 +182,7 @@ total_predictions = total_predictions.transpose(1,2,0,3)
 
 for img_id, image_data in enumerate(total_predictions.transpose(1,2,0,3)):
 
-    np.save(open(os.path.join(args.savedir,'./image_'+str(img_id)+'_data.npy'),'wb'),image_data)
+    np.save(open(os.path.join(args.savedir,'image_data','image_'+str(img_id)+'_data.npy'),'wb'),image_data)
 
 
 # print('Preparing directory %s' % args.savedir)

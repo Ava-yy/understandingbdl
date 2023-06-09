@@ -18,6 +18,7 @@ from torch.autograd import Variable
 from base64 import b64encode
 
 from sklearn import mixture
+from sklearn.cluster import KMeans
 
 import argparse
 import time
@@ -29,15 +30,13 @@ from swag.posteriors import SWAG_single
 from swag import data_places365_10c
 
 
-
 base_dir_0 = '/home/zhaoy32/Desktop/understandingbdl/experiments/train/ckpts/'
 
-#dataset_name = 'places365_10c'
-dataset_name = 'places365_3c'
+dataset_name = 'places365_10c'
+#dataset_name = 'places365_3c'
 
-# dataset_dir = 'places365_multiswag_10c'
-dataset_dir = 'places365_multiswag_3c'
-
+dataset_dir = 'places365_multiswag_10c'
+#dataset_dir = 'places365_multiswag_3c'
 
 base_dir = os.path.join(base_dir_0,dataset_dir,'multiswag')
 
@@ -228,29 +227,53 @@ def gmm_3c():
 
 
 
-@app.route('/gmm', methods=['GET','POST'])
+@app.route('/KMeans', methods=['GET','POST'])
 
-def gmm():
+def KMeans():
 
     client_data = flask.request.json
    
     image_id = client_data['image_id']
-
     n_components = client_data['n_components']
+    sample_id_list = client_data['sample_id_list']
 
     # the softmax predictions from model samples
     img_data = np.load(open(os.path.join(base_dir_0,dataset_dir,'multiswag/image_data/image_'+str(image_id)+'_data.npy'),'rb'))
     img_data = img_data.reshape((-1,img_data.shape[-1]))
 
+    img_data = img_data[np.array(sample_id_list)]
+
+    # train a gmm based on the softmax predictions
+    kmeans_data = KMeans(n_clusters=n_components, random_state=0, n_init="auto").fit(img_data)
+ 
+    return flask.jsonify({
+        'data':kmeans_data.tolist(),
+        'labels': kmeans_data.labels_.tolist(),
+        'centers': kmeans_data.cluster_centers_.tolist(),
+        })  
+
+
+@app.route('/gmm', methods=['GET','POST'])
+
+def gmm():
+
+    client_data = flask.request.json
+    image_id = client_data['image_id']
+    n_components = client_data['n_components']
+    sample_id_list = client_data['sample_id_list']
+
+    # the softmax predictions from model samples
+    img_data = np.load(open(os.path.join(base_dir_0,dataset_dir,'multiswag/image_data/image_'+str(image_id)+'_data.npy'),'rb'))
+    img_data = img_data.reshape((-1,img_data.shape[-1]))
+
+    img_data = img_data[np.array(sample_id_list)]
     # train a gmm based on the softmax predictions
     gmm_model = mixture.GaussianMixture(n_components=n_components, covariance_type='full', random_state=0)
 
     gmm_data = gmm_model.fit(img_data)
 
     # predictions = gmm_data.predict(img_data)
-
     # predictions_prob = gmm_data.predict_proba(img_data)
-
     # score_samples =gmm_data.score_samples(img_data)
 
     return flask.jsonify({
@@ -276,16 +299,17 @@ def gmm_on_the_fly():
     client_data = flask.request.json
    
     image_path = client_data['image_path']
-
     n_components = client_data['n_components']
-
     n_samples = client_data['n_samples']
+    sample_id_list = client_data['sample_id_list']
 
     # the softmax predictions from model samples
     img_data = sample_model_predictions(n_samples,image_path)
     # img_data = np.load(open(os.path.join(base_dir_0,dataset_dir,'multiswag/image_data/image_'+str(image_id)+'_data.npy'),'rb'))
     
     img_data = img_data.reshape((-1,img_data.shape[-1]))
+
+    img_data = img_data[np.array(sample_id_list)]
 
     # train a gmm based on the softmax predictions
     gmm_model = mixture.GaussianMixture(n_components=n_components, covariance_type='full', random_state=0)
@@ -318,7 +342,7 @@ def image_data():
     client_data = flask.request.json
    
     image_id = client_data['image_id']
-   
+    
     img_data = np.load(open(os.path.join(base_dir,'image_data/image_'+str(image_id)+'_data.npy'),'rb'))
 
     return flask.jsonify(img_data.tolist())
