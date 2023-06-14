@@ -28,8 +28,28 @@ res = []
 def kl_divergence(a, b):
     return sum(a[i] * np.log(a[i]/b[i]) for i in range(len(a)))
 
-nnl = nn.NLLLoss()
 
+def nll(x,target):
+
+    x_t = np.transpose(x) # (10,)
+
+    target_1 = np.zeros(10)
+
+    target_1[target] = 1
+
+    temp1 = -np.sum(np.matmul(target_1,np.log(x_t)))
+
+    target_2 = np.ones(10)
+
+    target_2[target] = 0
+
+    temp2 = -np.sum(np.matmul(target_2,np.log(1-x_t)))
+
+    return temp1+temp2
+
+
+#nnl = nn.NLLLoss()
+#ce = nn.CrossEntropyLoss()
 
 for img_id in range(len(image_label_prediction['targets'])):
 
@@ -45,9 +65,9 @@ for img_id in range(len(image_label_prediction['targets'])):
 
     target = image_label_prediction['targets'][img_id]
 
-    bma_nnl = nnl(torch.tensor([bma_prediction]),torch.tensor([target]))
+    bma_nnl = nll(bma_prediction,target)
 
-    bma_nnl = float(bma_nnl)
+    print(bma_nnl)
 
     ekl = 0
 
@@ -60,7 +80,6 @@ for img_id in range(len(image_label_prediction['targets'])):
     ekl /= data_prediction.shape[0]
 
     print('ekl',ekl)
-
 
     res.append({'image_id':img_id,'image_label':target,'bma_prediction':avg_prediction.tolist(),'nnl':bma_nnl,'ekl': ekl})
 
