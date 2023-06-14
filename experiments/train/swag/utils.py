@@ -94,6 +94,8 @@ def train_epoch(loader, model, criterion, optimizer, cuda=True, regression=False
             input = input.cuda(non_blocking=True)
             target = target.cuda(non_blocking=True)
 
+
+
         loss, output, stats = criterion(model, input, target)
         if regularizer:
             loss += regularizer(model)
@@ -278,21 +280,16 @@ def predict_eval(loader, model, eval_image_path, verbose=False):
             # input = input.cuda(non_blocking=True) # (128,3,32,32)
             image = image.to('cuda')  # (128,3,32,32)
             output = model(image)
-            # output = model.base(image)
-
+            
             batch_size = image.size(0)
             predictions.append(F.softmax(output, dim=1).cpu().numpy())
             targets.append(target.numpy())
             offset += batch_size
 
-            print('start eval image')
-            if not os.path.exists(eval_image_path):
-
-                print('save image')
-                for img_id, img in enumerate(image):
-                    save_image(denormalize_single(img),
-                               eval_image_path+'/img_'+str(image_id)+'.jpg')
-                    image_id += 1
+            for img_id, img in enumerate(image):
+                save_image(denormalize_single(img),
+                           eval_image_path+'/img_'+str(image_id)+'.jpg')
+                image_id += 1
 
     # json.dump(image_label, open(eval_image_path+'/image_label.json', 'w'))
     # json.dump(eval_img_prediction,open(eval_image_path+'/eval_img_prediction.json','w'))

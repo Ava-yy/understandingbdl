@@ -21,6 +21,8 @@ def loaders(path, batch_size, num_workers, shuffle_train=True):
     # validation_dir = os.path.join(path, 'validation')
     validation_dir = os.path.join(path, "val")
 
+    swag_bn_dir = os.path.join(path, "swag_eval_bn")
+
     # transformations for pretrained models (https://github.com/pytorch/examples/blob/42e5b996718797e45c46a25c55b031e6768f8440/imagenet/main.py#L89-L101)
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -52,7 +54,7 @@ def loaders(path, batch_size, num_workers, shuffle_train=True):
 
     # class_name = ['classroom','conference_room','office']
 
-    class_name = ['bar','banquet_hall','beer_hall','cafeteria','coffee_shop', 'dining_hall', 'food_court', 'fastfood_restaurant','restaurant_patio','sushi_bar']
+    class_name = ['banquet_hall', 'bar','beer_hall','cafeteria','coffee_shop', 'dining_hall', 'fastfood_restaurant','food_court','restaurant_patio','sushi_bar']
             
     # class_name=classes_list
     class_to_idx=dict(zip(class_name,range(len(class_name))))
@@ -66,7 +68,11 @@ def loaders(path, batch_size, num_workers, shuffle_train=True):
     test_set =  torchvision.datasets.ImageFolder(validation_dir, transform=transform_test)
     test_set.class_to_idx=class_to_idx
 
+    swag_bn_set = torchvision.datasets.ImageFolder(swag_bn_dir, transform=transform_train)
+    swag_bn_set.class_to_idx=class_to_idx
+
     num_classes = len(class_name)
+
 
     return (
         {
@@ -74,6 +80,13 @@ def loaders(path, batch_size, num_workers, shuffle_train=True):
                 train_set,
                 batch_size=batch_size,
                 shuffle=shuffle_train,
+                num_workers=num_workers,
+                pin_memory=True,
+            ),
+            "swag_bn": torch.utils.data.DataLoader(
+                swag_bn_set,
+                batch_size=batch_size,
+                shuffle=False,
                 num_workers=num_workers,
                 pin_memory=True,
             ),

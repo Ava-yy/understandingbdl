@@ -117,6 +117,7 @@ print('Preparing directory %s' % args.savedir)
 
 os.makedirs(args.savedir, exist_ok=True)
 os.makedirs(args.savedir+'eval_images',exist_ok=True)
+os.makedirs(args.savedir+'image_data', exist_ok=True)
 
 json.dump(val_images_names_labels,open(os.path.join(args.savedir,'places365_10c_val_fn_list.json'),'w'))
 
@@ -127,12 +128,16 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
     checkpoint = torch.load(ckpt)
     #swag_model.subspace.rank = torch.tensor(0)
     swag_model.load_state_dict(checkpoint['state_dict'])
+
     swag_predictions = []
 
     for sample in enumerate(range(args.swag_samples)):
+
         swag_model.sample(.5)
-        #print('start bn_update')
-        utils.bn_update(loaders['train'], swag_model)
+        utils.bn_update(loaders['swag_bn'], swag_model)
+        #utils.bn_update(loaders['train'], swag_model)
+
+        print('start predict_eval')
 
         res = utils.predict_eval(
             loaders['test'],
@@ -140,9 +145,11 @@ for ckpt_i, ckpt in enumerate(args.swag_ckpts):
             eval_image_path=args.savedir+'eval_images',
             verbose=False
         )
+        print('finish predict_eval')
         probs = res['predictions']
         targets = res['targets']
 
+        #json.dump(targets,open(os.path.join(args.savedir,'image_data','eval_images_label')))
         #json.dump(targets.tolist(), open(os.path.join(args.savedir,'image_label.json'),'w'))
 
         swag_predictions.append(probs) # (n_samples,n_images,n_classes)

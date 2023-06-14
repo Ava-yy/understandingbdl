@@ -160,8 +160,8 @@ parser.add_argument("--no_schedule", action="store_true", help="store schedule")
 
 args = parser.parse_args()
 
-CHOOSED_CLASSES = ['bar','banquet_hall','beer_hall','cafeteria','coffee_shop', 'dining_hall', 'food_court', 'fastfood_restaurant','restaurant_patio','sushi_bar']
-            
+CHOOSED_CLASSES = ['banquet_hall', 'bar','beer_hall','cafeteria','coffee_shop', 'dining_hall', 'fastfood_restaurant','food_court','restaurant_patio','sushi_bar']
+
 #['classroom', 'conference_room', 'office']
 
 args.device = None
